@@ -13,6 +13,9 @@ n_batches: 100
 
 
 # training
-epochs: 10
+epochs: 2
 lr: 0.01
 bsz: 32
+early_stopping_patience: 5
+early_stopping_min_delta: 0.0005
+best_model_path: "best_model.pt"
