@@ -3,7 +3,7 @@ import numpy as np
 import torch.nn as nn
 
 from .model_baseline import MLP
-from .utils import batchify_rand, load_toy, sample_logit, sample_sentence
+from .utils import batchify_rand_mlp, load_toy, sample_logit, sample_sentence_mlp
 
 def train_model(model, optimizer, loss_function, train_data, val_data, device,
                 epochs, batch_size, seq_len, train_steps_per_epoch, val_steps):
@@ -17,7 +17,7 @@ def train_model(model, optimizer, loss_function, train_data, val_data, device,
         epoch_train_loss = 0.0
 
         for _ in range(train_steps_per_epoch):
-            train_batch = batchify_rand(train_data, batch_size, seq_len)   # (B, seq_len)
+            train_batch = batchify_rand_mlp(train_data, batch_size, seq_len)   # (B, seq_len)
             x_train = train_batch[:, :-1].long().to(device)                           # (B, seq_len-1)
             y_train = train_batch[:, -1].long().to(device)                            # (B,)
 
@@ -38,7 +38,7 @@ def train_model(model, optimizer, loss_function, train_data, val_data, device,
 
         with torch.no_grad():
             for _ in range(val_steps):
-                val_batch = batchify_rand(val_data, batch_size, seq_len)   # WICHTIG: val_data
+                val_batch = batchify_rand_mlp(val_data, batch_size, seq_len)   # WICHTIG: val_data
                 x_val = val_batch[:, :-1].long().to(device)
                 y_val = val_batch[:, -1].long().to(device)
 
@@ -63,7 +63,7 @@ def evaluate_model(model, loss_function, data, device, batch_size, seq_len, eval
 
     with torch.no_grad():
         for _ in range(eval_steps):
-            batch = batchify_rand(data, batch_size, seq_len)   # (B, T_in+1)
+            batch = batchify_rand_mlp(data, batch_size, seq_len)   # (B, T_in+1)
             x = batch[:, :-1].long().to(device)                           # (B, T_in)
             y = batch[:, -1].long().to(device)                            # (B,)
 
@@ -144,7 +144,7 @@ def run():
     start_idx = np.random.randint(0, len(train) - T_in)
     start_sequence = train[start_idx:start_idx + T_in]
 
-    sampled_sentence = sample_sentence(model, i2c, start_sequence, device, steps=100, temperature=1.0)
+    sampled_sentence = sample_sentence_mlp(model, i2c, start_sequence, device, steps=100, temperature=1.0)
     print(sampled_sentence)
 
     return train_loss, val_loss, val_acc, model, test_acc, sampled_sentence

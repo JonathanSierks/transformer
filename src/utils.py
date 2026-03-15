@@ -1,5 +1,6 @@
 import wget, os, gzip, pickle, random, re, sys, importlib, tqdm, math, os, gzip, re, string
 
+import yaml
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -7,6 +8,7 @@ import torch.distributions as dist
 
 from tqdm import trange
 from collections import Counter
+from pathlib import Path
 
 import torch
 
@@ -254,7 +256,7 @@ def load_imdb(final=False, val=5000, seed=0, voc=None, char=False):
            (i2w, w2i), 2
 
 # gets data in the form of a single sequence and slices bsz batches with random starting positions of length T out of it
-def batchify_rand(x, bsz, T):
+def batchify_rand_mlp(x, bsz, T):
     N = x.size(0)
     rand_start_indices = torch.randint(0, N - T + 1, (bsz,)).unsqueeze(1)
     off_sets = torch.arange(T).unsqueeze(0)
@@ -262,6 +264,13 @@ def batchify_rand(x, bsz, T):
     batch = x[indices].long()
     return batch
 
+def batchify_rand_transformer(x, bsz, L):
+    N = x.size(0)
+    rand_start_indices = torch.randint(0, (N-L), (bsz,)).unsqueeze(1) # (bsz, 1)
+    off_sets = torch.arange(L+1).unsqueeze(0) # (1,L+1)
+    indices = rand_start_indices + off_sets # (bsz, 1) + (1,L+1) -> broadcasting
+    batch = x[indices].long() # slice out each seq of batch in parallel and conver to int
+    return batch
 
 def sample_logit(output, temperature=1.0):
     """
@@ -274,7 +283,7 @@ def sample_logit(output, temperature=1.0):
     cd = dist.Categorical(p)
     return cd.sample()
 
-def sample_sentence(model, i2c, sequence, device, steps=40, temperature=1.0):
+def sample_sentence_mlp(model, i2c, sequence, device, steps=40, temperature=1.0):
     model.eval()
     sequence = sequence.clone().long().to(device)
     char_idx = []
@@ -284,6 +293,31 @@ def sample_sentence(model, i2c, sequence, device, steps=40, temperature=1.0):
             x = sequence.unsqueeze(0).long()          # (1, T_in)
             output = model(x)                         # (1, vocab_size)
             next_idx = sample_logit(output[0], temperature)
+
+            char_idx.append(next_idx.item())
+            sequence = torch.cat([sequence[1:], next_idx.view(1).long()], dim=0)
+
+    chars = [i2c[idx] for idx in char_idx]
+    return "".join(chars)
+
+
+def load_config(path):
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+    
+
+def sample_sentence_transformer(model, i2c, sequence, device, steps=40, temperature=1.0):
+    model.eval()
+    sequence = sequence.clone().long().to(device)
+    char_idx = []
+
+    with torch.no_grad():
+        for _ in range(steps):
+            x = sequence.unsqueeze(0).long()          # (1, T)
+            output = model(x)                         # (1, T, vocab_size)
+
+            last_logits = output[:, -1, :]            # (1, vocab_size)
+            next_idx = sample_logit(last_logits[0], temperature)
 
             char_idx.append(next_idx.item())
             sequence = torch.cat([sequence[1:], next_idx.view(1).long()], dim=0)
