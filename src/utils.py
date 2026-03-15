@@ -1,5 +1,6 @@
 import wget, os, gzip, pickle, random, re, sys, importlib, tqdm, math, os, gzip, re, string
 
+import copy
 import yaml
 import torch
 import torch.nn as nn
@@ -324,3 +325,23 @@ def sample_sentence_transformer(model, i2c, sequence, device, steps=40, temperat
 
     chars = [i2c[idx] for idx in char_idx]
     return "".join(chars)
+
+# produce a randomly created config file as input for random search
+def sample_config(base_cfg, rng):
+    cfg = copy.deepcopy(base_cfg)
+
+    # learning rate: besser log-uniform als uniform
+    cfg["lr"] = 10 ** rng.uniform(-3.5, -2.0)
+
+    # diskrete Hyperparameter
+    cfg["dropout"] = rng.choice([0.0, 0.2, 0.4, 0.6])
+    cfg["embedding_dim"] = rng.choice([128, 256, 300])
+    cfg["num_Tblocks"] = rng.choice([2, 3, 4, 5, 6])
+    cfg["bsz"] = rng.choice([16, 32])
+
+    # nur num_heads wählen, die embedding_dim teilen
+    possible_heads = [h for h in [2, 4, 5, 6, 8, 10] if cfg["embedding_dim"] % h == 0]
+    cfg["num_heads"] = rng.choice(possible_heads)
+
+    return cfg
+

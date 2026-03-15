@@ -14,10 +14,8 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torch.distributions as dist
 
-from .utils import load_config, load_toy, batchify_rand_transformer, sample_sentence_transformer
+from .utils import load_config, load_toy, batchify_rand_transformer, sample_sentence_transformer, sample_config
 from .model import AutoRegressiveTransformer
-
-
 
 def run_one_experiment(cfg, seed=42):
     
@@ -31,7 +29,6 @@ def run_one_experiment(cfg, seed=42):
     else:
         device = torch.device(requested_device)
 
-    random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
@@ -237,6 +234,56 @@ def run_many_experiments(cfg, seeds):
         result = run_one_experiment(cfg, seed)
         results.append(result)
     return results
+
+
+# implements a simple random search through some hyperparameters to explore hyperparameter space
+def random_search(base_cfg, n_trials=20, seed=42):
+    rng = random.Random(seed)
+    all_results = []
+
+    for trial in range(n_trials):
+        cfg = sample_config(base_cfg, rng)
+
+        print(
+            f"[sampled config] Trial {trial+1}: "
+            f"lr={cfg['lr']:.6f}, dropout={cfg['dropout']}, "
+            f"emb={cfg['embedding_dim']}, blocks={cfg['num_Tblocks']}, "
+            f"heads={cfg['num_heads']}, bsz={cfg['bsz']}"
+        )
+
+        result = run_one_experiment(cfg, seed=42)
+
+        # !TBD: add results["val_loss"] or acc and rerun so we can plot some configs performances
+        trial_summary = {
+            "trial": trial + 1,
+            "seed": result["seed"],
+            "lr": cfg["lr"],
+            "dropout": cfg["dropout"],
+            "embedding_dim": cfg["embedding_dim"],
+            "num_Tblocks": cfg["num_Tblocks"],
+            "num_heads": cfg["num_heads"],
+            "bsz": cfg["bsz"],
+            "best_epoch": result["best_epoch"],
+            "best_val_loss": min(result["val_loss"]),
+            "best_val_acc": max(result["val_acc"]),
+            "test_loss": result["test_loss"],
+            "test_acc": result["test_acc"],
+        }
+
+        all_results.append(trial_summary)
+
+        print(
+            f"Trial {trial+1}/{n_trials} | "
+            f"lr={cfg['lr']:.6f} | "
+            f"dropout={cfg['dropout']} | "
+            f"emb={cfg['embedding_dim']} | "
+            f"blocks={cfg['num_Tblocks']} | "
+            f"heads={cfg['num_heads']} | "
+            f"val_loss={trial_summary['best_val_loss']:.4f} | "
+            f"val_acc={trial_summary['best_val_acc']:.4f}"
+        )
+
+    return all_results
 
 
 def main():
