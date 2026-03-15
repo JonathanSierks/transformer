@@ -1,15 +1,18 @@
-data:
-  batch_size: 64
-  sequence_length: 256
 
-model:
-  name: gcn
-  hidden_dim: 16
-  dropout: 0.5
-  early_stopping: 10
+# achitecture
+num_heads: 6
+num_Tblocks: 4
+embedding_dim: 300
+dropout: 0.1
+device: "cuda"
 
-train:
-  epochs: 200
-  lr: 0.01
-  weight_decay: 0.0005
-  device: cpu
+vocab_size: 31
+max_sequence_length: 256
+T: 128
+n_batches: 100
+
+
+# training
+epochs: 10
+lr: 0.01
+bsz: 32
