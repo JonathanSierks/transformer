@@ -4,21 +4,18 @@ This project studies next-character prediction on a toy character dataset and co
 
 ## 1) Context / Key-concepts
 
-We consider a character vocabulary of size $V$, where each character is mapped to an integer index in $\{1, ..., V\}$. A sequence of length $T$ is denoted by $x = (x_1, x_2, ..., x_T)$, where each $x_t$ is a character token.
-
-The task is next-character prediction.
+We consider a character vocabulary of size $V$, where each character is mapped to an integer index in $\{1, ..., V\}$. A sequence of length $T$ is denoted by $x = (x_1, x_2, ..., x_T)$, where each $x_t$ is a character token.The task is next-character prediction.
 
 ## 2) Implementation details
 
-The project uses a toy character dataset for the main experiments, and an extension to Wikipedia text is planned for future experiments.
+The project uses a toy character dataset for the main experiments, and an extension to Wikipedia text is planned for future experiments. The toy data is intentionally simple and therefore useful for quickly validating model behavior, training dynamics, and sampling quality.
 
-The toy data is intentionally simple and therefore useful for quickly validating model behavior, training dynamics, and sampling quality.
+Example sentence of the toy dataset: "the short man goes ( for the gorgeous bear ) . the koala walks to the lawyer . a willowy businesswom"
+
 
 ### 2.1) Baseline: MLP (toy data)
 
 For the baseline MLP, a full input sequence is used to predict only the single next character: $(x_1, ..., x_T) -> x_{T+1}$. This gives one classification target per sequence.
-
-To simplify the setup, the baseline uses a classification-based approach rather than a fully autoregressive one. The input sequence is only used to predict one single next token, namely the token at position T + 1.
 
 Architecture:
 - sequence length: 64
@@ -94,6 +91,8 @@ Despite the simple setup and roughly chosen hyperparameters, the model already r
 Final result:
 - test loss: 0.487
 - test acc: 0.800
+
+Sample output: "goes ( at a reluctant teacher ) . the quick woman went . the businessman ran quickly . a woman runs"
 
 The autoregressive transformer shows very fast and effective learning on the toy dataset. Both training and validation loss drop sharply within the first few epochs, while validation accuracy quickly rises to around 80%, indicating that the model captures the underlying structure of the language-like data very efficiently. The generated sample supports this impression, as it already contains clear structure and plausible word-like patterns.
 
