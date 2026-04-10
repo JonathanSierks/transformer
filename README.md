@@ -127,22 +127,21 @@ repo-name/
 ├── README.md
 ├── requirements.txt                 
 ├── src/
-│   ├── model.py                   
-│   ├── train.py                
-│   ├── data_utils.py              
-├── data/
-│   └── Planetoid
-│   └── ogbn_arxiv                
+│   ├── model_baseline.py                   
+│   ├── model.py                
+│   ├── train_baseline.py
+│   ├── train.py
+│   └── utils.py              
+├── data/               
 ├── notebooks/
 │   └── experiments.ipynb  
 ├── configs/
-│   └── default_config.yaml
-│   └── citeseer.yaml
-│   └── pubmed.yaml   
-│   └── ogbn_arxiv_full_batch.yaml
-│   └── pubmed_config_mini_batch.yaml
+│   ├── default_config.yaml
+│   └── wikipedia_config.yaml
 ├── results/
-    └── ... 
+    ├── plots/
+    ├── all_results.json
+    └── best_model.pt 
 ```
 
 ## How to run
@@ -157,6 +156,6 @@ Run baseline:
 
 `python -m src.train_baseline`
 
-Run custom config:
+Run custom config (transformer):
 
 `python -m src.train_baseline --config configs/default_config.yaml`
